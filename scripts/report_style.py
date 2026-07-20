@@ -84,6 +84,15 @@ def _emit(p, marker, text, size, bold, highlight_key=None):
     return p
 
 
+def title(doc, text):
+    """번호 없는 문서 표제 — 가운데 정렬, 굵게, 큰 글자."""
+    p = _para(doc, 0.0, space_before=0)
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_after = Pt(8)
+    _set_run_font(p.add_run(text), size=15, bold=True)
+    return p
+
+
 def h1(doc, num, text, highlight_key=None):
     p = _para(doc, 0.0, space_before=10)
     return _emit(p, f"{num}. ", text, size=13, bold=True, highlight_key=highlight_key)
@@ -109,6 +118,40 @@ def h4(doc, letter, text):
 def dash(doc, text, left_cm=1.2):
     p = _para(doc, left_cm, hanging_cm=0.5)
     return _emit(p, "- ", text, size=BODY_SIZE, bold=False)
+
+
+def dash_label(doc, tag, body, left_cm=1.2):
+    """- (tag) body  — 대시 항목 앞에 볼드 괄호 라벨."""
+    p = _para(doc, left_cm, hanging_cm=0.5)
+    _set_run_font(p.add_run("- "))
+    _set_run_font(p.add_run(f"({tag}) "), bold=True)
+    if body:
+        _set_run_font(p.add_run(body))
+    return p
+
+
+def subbullet(doc, text, left_cm=2.0):
+    """· text — 라벨 하위 세부 항목."""
+    p = _para(doc, left_cm, hanging_cm=0.5)
+    _set_run_font(p.add_run("· "))
+    _set_run_font(p.add_run(text))
+    return p
+
+
+def info_table(doc, pairs):
+    """2열 개요표: 왼쪽 라벨(음영) | 오른쪽 내용. pairs=[(label, value), ...]."""
+    from docx.shared import Cm as _Cm
+    t = doc.add_table(rows=0, cols=2)
+    t.style = "Table Grid"
+    for lab, val in pairs:
+        cells = t.add_row().cells
+        _cell_text(cells[0], lab, bold=True, center=True)
+        _shade(cells[0], HDR_FILL)
+        _cell_text(cells[1], val, center=False)
+    for row in t.rows:
+        row.cells[0].width = _Cm(3.0)
+        row.cells[1].width = _Cm(13.0)
+    return t
 
 
 def label(doc, level, tag, body):
