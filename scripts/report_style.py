@@ -54,6 +54,8 @@ def new_document():
     pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     pf.line_spacing = 1.3
     pf.space_after = Pt(2)
+    # 계층형 자동 넘버링 카운터. 상위 호출 시 하위를 0으로 리셋한다.
+    doc._counter = {"h1": 0, "h2": 0, "h3": 0, "h4": 0}
     return doc
 
 
@@ -93,26 +95,60 @@ def title(doc, text):
     return p
 
 
-def h1(doc, num, text, highlight_key=None):
+def _bump(doc, level, override=None):
+    """레벨 카운터를 +1(또는 override) 하고 하위 레벨을 0으로 리셋. 새 번호 반환.
+
+    상위 항목이 바뀌면 하위 번호가 자동으로 다시 1(①/a)부터 시작하도록 보장한다.
+    override가 주어지면 그 값으로 카운터를 세팅한다(예: 5장부터 시작).
+    """
+    c = doc._counter
+    c[level] = override if override is not None else c[level] + 1
+    for lower in {"h1": ("h2", "h3", "h4"),
+                  "h2": ("h3", "h4"),
+                  "h3": ("h4",),
+                  "h4": ()}[level]:
+        c[lower] = 0
+    return c[level]
+
+
+def image(doc, path, width_cm=16.0):
+    """본문폭에 맞춰 이미지 삽입(가운데 정렬). 로드맵 등 그림용."""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(4)
+    p.add_run().add_picture(path, width=Cm(width_cm))
+    return p
+
+
+def h1(doc, text, num=None, highlight_key=None):
+    n = _bump(doc, "h1", num)
     p = _para(doc, 0.0, space_before=10)
-    return _emit(p, f"{num}. ", text, size=13, bold=True, highlight_key=highlight_key)
+    return _emit(p, f"{n}. ", text, size=13, bold=True, highlight_key=highlight_key)
 
 
-def h2(doc, num, text):
+def h2(doc, text, num=None):
+    n = _bump(doc, "h2", num)
     p = _para(doc, 0.5, space_before=6)
-    return _emit(p, f"{num}) ", text, size=11.5, bold=True)
+    return _emit(p, f"{n}) ", text, size=11.5, bold=True)
 
 
-def h3(doc, idx, text):
-    """idx: 1..20 -> ①..⑳"""
-    marker = CIRCLED[idx - 1] + " "
+def h3(doc, text, num=None):
+    """자동 ①..⑳ (20 초과 시 마지막 기호로 clamp)."""
+    n = _bump(doc, "h3", num)
+    marker = CIRCLED[min(n, len(CIRCLED)) - 1] + " "
     p = _para(doc, 1.2, hanging_cm=0.7)
     return _emit(p, marker, text, size=BODY_SIZE, bold=False)
 
 
-def h4(doc, letter, text):
+def h4(doc, text, letter=None):
+    """자동 a)..z). letter 문자를 직접 넘기면 그 문자로 세팅."""
+    if letter is not None:
+        n = _bump(doc, "h4", ord(letter) - ord("a") + 1)
+    else:
+        n = _bump(doc, "h4")
+    ch = chr(ord("a") + min(n, 26) - 1)
     p = _para(doc, 1.9, hanging_cm=0.7)
-    return _emit(p, f"{letter}) ", text, size=BODY_SIZE, bold=False)
+    return _emit(p, f"{ch}) ", text, size=BODY_SIZE, bold=False)
 
 
 def dash(doc, text, left_cm=1.2):
