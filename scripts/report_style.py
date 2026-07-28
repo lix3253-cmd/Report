@@ -233,3 +233,55 @@ def shaded_table(doc, headers, rows, emphasis_rows=None):
             if i in emphasis_rows:
                 _shade(cells[j], EMPH_FILL)
     return t
+
+
+def rnr_table(doc, headers, rows, merge_cols=None, wide_cols=None):
+    """서술형 표(첨부 8장 예시 밀도). 지정 열은 연속 동일값을 세로 병합한다.
+
+    headers: 열 제목 리스트.
+    rows: 각 행의 셀 값 리스트.
+    merge_cols: 세로 병합할 열 인덱스 목록(연속 동일값을 하나로 묶음). 예: 카테고리 열.
+    wide_cols: 좌측 정렬(서술형)으로 둘 열 인덱스 목록. 미지정 시 마지막 열만 좌측 정렬.
+    """
+    merge_cols = set(merge_cols or [])
+    if wide_cols is None:
+        wide_cols = {len(headers) - 1}
+    else:
+        wide_cols = set(wide_cols)
+
+    t = doc.add_table(rows=1, cols=len(headers))
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for j, h in enumerate(headers):
+        c = t.rows[0].cells[j]
+        _cell_text(c, h, bold=True, center=True)
+        _shade(c, HDR_FILL)
+
+    body = []
+    for row in rows:
+        cells = t.add_row().cells
+        body.append(cells)
+        for j, val in enumerate(row):
+            _cell_text(cells[j], val, center=(j not in wide_cols))
+            if j in merge_cols and val:
+                _shade(cells[j], HDR_FILL)
+
+    # 세로 병합: 각 병합 열에서 위 셀과 값이 같으면(또는 빈 값이면) 병합.
+    # merge()가 셀 텍스트를 이어붙이므로, 병합 전에 아래 셀 텍스트를 비워
+    # 대표값이 한 번만 표시되게 한다.
+    for j in merge_cols:
+        start = 0
+        for i in range(1, len(rows) + 1):
+            same = (i < len(rows)
+                    and (rows[i][j] == "" or rows[i][j] == rows[start][j]))
+            if not same:
+                if i - 1 > start:
+                    for k in range(start + 1, i):
+                        body[k][j].text = ""
+                    merged = body[start][j].merge(body[i - 1][j])
+                    # merge가 이어붙인 빈 문단 제거 → 대표값 한 줄만 남김
+                    for p in merged.paragraphs[1:]:
+                        p._element.getparent().remove(p._element)
+                    merged.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                start = i
+    return t
