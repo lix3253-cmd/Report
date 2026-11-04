@@ -285,3 +285,112 @@ def rnr_table(doc, headers, rows, merge_cols=None, wide_cols=None):
                     merged.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 start = i
     return t
+
+
+# ── Word 자동 번호 서식(다단계 목록) ───────────────────────────────
+# 번호를 글자로 입력하지 않고 Word 번호 서식(numbering.xml)으로 넣는다.
+# 다른 문서로 복사해도 번호가 서식으로 따라가며, 항목을 넣고 빼면 번호가 자동으로 다시 매겨진다.
+# 레벨: 0 "1."  1 "1)"  2 "①"  3 "a)"  4 "i)"  5 "-"(불릿)
+NATIVE_LEVELS = [
+    # (numFmt, lvlText, left_cm, hanging_cm)
+    ("decimal",               "%1.", 0.0, 0.6),
+    ("decimal",               "%2)", 0.5, 0.6),
+    ("decimalEnclosedCircle", "%3",  1.2, 0.6),
+    ("lowerLetter",           "%4)", 1.9, 0.6),
+    ("lowerRoman",            "%5)", 2.6, 0.7),
+    ("bullet",                "-",   3.3, 0.4),
+]
+
+
+def _el(tag, **attrs):
+    e = OxmlElement(tag)
+    for k, v in attrs.items():
+        e.set(qn(f"w:{k}"), str(v))
+    return e
+
+
+def native_list(doc, starts=None):
+    """다단계 번호 목록 정의를 문서에 추가하고 numId를 반환.
+
+    starts: {레벨: 시작번호}. 예) ③부터 시작하는 조각이면 {2: 3}.
+    """
+    numbering = doc.part.numbering_part.element
+    abs_ids = [int(a.get(qn("w:abstractNumId")))
+               for a in numbering.findall(qn("w:abstractNum"))]
+    num_ids = [int(n.get(qn("w:numId"))) for n in numbering.findall(qn("w:num"))]
+    abs_id = max(abs_ids, default=0) + 1
+    num_id = max(num_ids, default=0) + 1
+
+    absn = _el("w:abstractNum", abstractNumId=abs_id)
+    absn.append(_el("w:multiLevelType", val="multilevel"))
+    for i, (fmt, text, left, hang) in enumerate(NATIVE_LEVELS):
+        lvl = _el("w:lvl", ilvl=i)
+        lvl.append(_el("w:start", val=1))
+        lvl.append(_el("w:numFmt", val=fmt))
+        if i > 0:
+            lvl.append(_el("w:lvlRestart", val=i))   # 바로 위 레벨이 바뀌면 다시 1부터
+        lvl.append(_el("w:lvlText", val=text))
+        lvl.append(_el("w:lvlJc", val="left"))
+        ppr = _el("w:pPr")
+        ppr.append(_el("w:ind", left=int((left + hang) * 567), hanging=int(hang * 567)))
+        lvl.append(ppr)
+        rpr = _el("w:rPr")
+        rpr.append(_el("w:rFonts", ascii=FONT, hAnsi=FONT, eastAsia=FONT))
+        lvl.append(rpr)
+        absn.append(lvl)
+    # abstractNum은 num보다 앞에 있어야 한다
+    first_num = numbering.find(qn("w:num"))
+    if first_num is not None:
+        first_num.addprevious(absn)
+    else:
+        numbering.append(absn)
+
+    num = _el("w:num", numId=num_id)
+    num.append(_el("w:abstractNumId", val=abs_id))
+    for lvl_i, start in (starts or {}).items():
+        ov = _el("w:lvlOverride", ilvl=lvl_i)
+        ov.append(_el("w:startOverride", val=start))
+        num.append(ov)
+    numbering.append(num)
+    return num_id
+
+
+def nitem(doc, num_id, level, text, bold=False, size=BODY_SIZE, space_before=0.0):
+    """Word 자동 번호가 붙은 문단. 번호 글자는 입력하지 않는다."""
+    p = doc.add_paragraph()
+    p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p.paragraph_format.space_before = Pt(space_before)
+    ppr = p._p.get_or_add_pPr()
+    numpr = _el("w:numPr")
+    numpr.append(_el("w:ilvl", val=level))
+    numpr.append(_el("w:numId", val=num_id))
+    ppr.append(numpr)
+    _set_run_font(p.add_run(text), size=size, bold=bold)
+    return p
+
+
+def caption(doc, text, center=True, space_before=4.0):
+    """[표. N] / [그림. N] 제목 문단(번호 서식 없음)."""
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if center else WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.space_before = Pt(space_before)
+    _set_run_font(p.add_run(text), bold=True)
+    return p
+
+
+def grid_table(doc, headers, rows):
+    """머리행 음영 + 첫 열 음영, 모든 셀 가운데 정렬. 셀 안 줄바꿈은 '\\n'."""
+    t = doc.add_table(rows=1, cols=len(headers))
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for j, h in enumerate(headers):
+        c = t.rows[0].cells[j]
+        _cell_text(c, h, bold=True, center=True)
+        _shade(c, HDR_FILL)
+    for row in rows:
+        cells = t.add_row().cells
+        for j, val in enumerate(row):
+            _cell_text(cells[j], val, bold=(j == 0), center=True)
+            if j == 0:
+                _shade(cells[j], HDR_FILL)
+    return t
