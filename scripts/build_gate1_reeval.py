@@ -195,95 +195,168 @@ def grid_table(doc, headers, rows, widths_cm, bold_rows=(), center_cols=(0,)):
     return t
 
 
-TABLE1_HEADERS = ["구분", "점검 항목 (목표)", "Gate #1 최초 평가",
-                  "1차 재평가 (11/5)", "잔여 과제 조치 (2차 재평가 12/4)"]
-TABLE1_ROWS = [
-    ["양산 전개", "양산 공정 셀 문서 (셀라인 PFD 준비)", "🟢 통과",
-     "셀(JC 파일럿 기준) 양산 공정 문서 작성 완료", LEFT],
-    [UP, "양산 공정 모듈 문서 (모듈라인 PFD 준비)", "🟢 통과",
-     "모듈(G12R 48FC PR) 양산 공정 문서 작성 완료", LEFT],
-    [UP, "건축 및 유틸리티 (레이아웃 확보)", "🟢 통과",
-     "PFD 및 폼팩터 기준 레이아웃 확보", LEFT],
-    ["상업화 Risk", "Cell High-Risk (공정/설비 Risk 해소)", ["🟢 통과", "(완료 6)"],
-     "Cell High-Risk 전체 완료", LEFT],
-    [UP, "Module High-Risk (공정/설비 Risk 해소)", ["🔴 미달", "(완료 3, 미달 2)"],
-     "🔴 미달: Light Soaker 공정 신뢰성 검증으로 진척, 2항목 잔여 (CTM 재현성, 모듈 설비 배치 사양)",
-     ["CTM: 분류 기준 BKM 반영 및 검증",
-      "모듈 설비 배치 사양: offset 측정 계획 수립 및 검증",
-      "(12/4, 기술본부)"]],
-    ["제품", "양산 폼팩터 (폼팩터 확정)", "🟢 통과",
-     "Residential 향 G12R 48FC Portrait", LEFT],
-    [UP, "IEC/UL 인증 (인증 획득)", "🟢 통과",
-     "인증 획득 완료 (THA R&D M10 54 FC LS)", LEFT],
-    ["Bankability", "LCOE 파라미터 (TCOE, LLB, 열화율 확보)", "🟢 통과",
-     "TCOE -0.22%/K, LLB 93.1% 데이터 확보", LEFT],
-    [UP, "글로벌 필드 테스트 (필드 실증 수행)", "🟢 통과",
-     "R&D 주도 필드 실증 진행 중, '26년 4Q 열화율 결과 확보 예정", LEFT],
-    ["JC 파일럿", "cell 효율 (≥ 28.0%)", "🔴 미달 (26.8%)", "🟢 **해결** (28.6%)", "–"],
-    [UP, "FpG (≥ 95.0%)", "🔴 미달 (93.7%)", "🔴 미달: 50% (wet station 공정 이슈)",
-     "11/13 공정 정상화 후 재측정"],
-    [UP, "신뢰성 (LeTID 0%, 48h)", "🟢 통과", "±0% (48h), -0.7% (100hr)", LEFT],
-    [UP, "열적 열화 (0%)", "🟢 통과", "-0.7%", LEFT],
-    [UP, "모듈 출력 (480W)", "🟢 통과", "481W", LEFT],
-    ["합계", LEFT, "19 / 23 통과 (미달 4)", "20 / 23 통과 (1건 해결, 미달 3)", "23 / 23 목표 (12/4)"],
-]
 
-TABLE2_HEADERS = ["구분", "Risk #1 CTM 재현성", "Risk #2 모듈 설비 배치 사양",
-                  "JC 파일럿 cell 효율", "JC 파일럿 FpG"]
-TABLE2_ROWS = [
-    ["문제 현상", "동일 등급 cell 간 모듈 출력 편차, 관리 기준 부재",
-     "모듈 라벨 출력 측정 방법 부재", "테스트 수준 목표 달성, BKM 전환 지연", LEFT],
-    ["문제 원인", "cell 분류 기준 미정립",
-     "1 sun 방식 안정화 시간 과다(>10시간)로 양산 적용 불가", "T05 설비 nozzle 막힘", LEFT],
-    ["개선 계획", "PL, EL, HyR, IV 중 모듈 출력 연계 핵심 지표 선정 후 cell 분류 기준 반영",
-     ["Light Soaker: 10 sun 고출력 사양 적용, Gsolar 社 설비 유효성 및 신뢰성 검토",
-      "offset: Offline 측정기 15시간 MPPT 측정으로 라벨 출력 보정값 산정 (First Solar 벤치마킹)"],
-     "신규 노즐 도입, CW44부터 공증착 BKM 대량 생산 검증", LEFT],
-    ["실행 및 결과",
-     "Toplimit Forward scan 분류 적용, Full Module 7개 CTM 오차 ±0.3% (기준 ±0.5%), 공정 시간 0.2초",
-     ["Light Soaker: 2x2 미니 모듈 UV, LeTID 약 99%", "offset: 35매 측정, 적정 등급 74%"],
-     "12,686장 효율 28.6% (기준 ≥ 28.0%)",
-     "12,686장 FpG 50% (기준 ≥ 95.0%), 후면 pad 불량"],
-    ["결론", "🔴 미달. 검증 수량 부족, BKM 미전환. 분류 기준 BKM 반영 후 재검증",
-     "🔴 미달. 신뢰성 검증 완료, 라벨 측정 방안 미완료. 계획 재수립 및 추가 검증",
-     "🟢 통과", "🔴 미달. 11/13 공정 정상화 후 재측정"],
-    ["TRL", "TRL 5 (JC 파일럿 검증)",
-     ["Light Soaker TRL 3 (R&D 검증)", "offset TRL 2 (아이디어 단계)"],
-     "TRL 6 (JC 파일럿 BKM)", "TRL 5 (JC 파일럿 검증)"],
+
+# ── Claude Docs HTML 내보내기 → docx ─────────────────────────────
+import re
+import html as _html
+from html.parser import HTMLParser
+
+SRC = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
+                                   "content", "11월_Gate1_재평가.html"))
+TABLE_WIDTHS = [[2.6, 4.0, 2.6, 4.4, 3.4], [2.0, 3.9, 4.5, 3.3, 3.3]]
+
+MARKERS = [
+    (re.compile(r"^(i|ii|iii|iv|v|vi|vii|viii|ix|x)\)\s*"), 5),
+    (re.compile(r"^[a-z]\)\s*"), 4),
+    (re.compile(r"^[①-⑳]\s*"), 3),
+    (re.compile(r"^\d+\)\s*"), 2),
+    (re.compile(r"^\d+\.\s+"), 1),
 ]
 
 
-def build(path=OUT):
+class _DocParser(HTMLParser):
+    """블록 목록: ('h1'|'h2'|'p', runs) 또는 ('table', rows).
+    runs = [(text, bold)], rows = [[{'paras': [runs], 'rs', 'cs', 'th'}]]"""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.blocks, self.runs, self.bold = [], None, 0
+        self.table = self.row = self.cell = None
+        self.kind = None
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag in ("h1", "h2", "p"):
+            if self.cell is not None:
+                self.runs = []
+                self.cell["paras"].append(self.runs)
+            else:
+                self.kind, self.runs = tag, []
+        elif tag == "strong":
+            self.bold += 1
+        elif tag == "table":
+            self.table = []
+        elif tag == "tr":
+            self.row = []
+        elif tag in ("td", "th"):
+            self.cell = {"paras": [], "rs": int(a.get("rowspan", 1)),
+                         "cs": int(a.get("colspan", 1)), "th": tag == "th"}
+            self.runs = []
+            self.cell["paras"].append(self.runs)
+        elif tag == "br" and self.runs is not None:
+            self.runs.append(("\n", False))
+
+    def handle_endtag(self, tag):
+        if tag in ("h1", "h2", "p") and self.cell is None and self.runs is not None:
+            self.blocks.append((self.kind, self.runs))
+            self.runs = None
+        elif tag == "strong":
+            self.bold -= 1
+        elif tag in ("td", "th"):
+            self.cell["paras"] = [r for r in self.cell["paras"] if r] or [[]]
+            self.row.append(self.cell)
+            self.cell, self.runs = None, None
+        elif tag == "tr":
+            self.table.append(self.row)
+        elif tag == "table":
+            self.blocks.append(("table", self.table))
+            self.table = None
+
+    def handle_data(self, data):
+        if self.runs is not None:
+            self.runs.append((data, self.bold > 0))
+
+
+def _put_runs(p, runs, bold=False):
+    for text, b in runs:
+        _runs(p, text, bold or b)
+
+
+def _strip_marker(runs):
+    """첫 run 앞의 공백과 번호 기호를 떼고 단계를 돌려준다."""
+    if not runs:
+        return None, runs
+    first = runs[0][0].lstrip("   \t")
+    for rx, lvl in MARKERS:
+        m = rx.match(first)
+        if m:
+            return lvl, [(first[m.end():], runs[0][1])] + runs[1:]
+    return None, [(first, runs[0][1])] + runs[1:]
+
+
+def html_table(doc, rows, widths):
+    ncols = sum(c["cs"] for c in rows[0])
+    t = doc.add_table(rows=len(rows), cols=ncols)
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t.autofit = False
+    taken, spans = set(), []
+    for r, row in enumerate(rows):
+        c = 0
+        for cell in row:
+            while (r, c) in taken:
+                c += 1
+            for dr in range(cell["rs"]):
+                for dc in range(cell["cs"]):
+                    taken.add((r + dr, c + dc))
+            spans.append((r, c, cell))
+            c += cell["cs"]
+    for j, w in enumerate(widths[:ncols]):
+        t.columns[j].width = Cm(w)
+        for row in t.rows:
+            row.cells[j].width = Cm(w)
+    for r, c, cell in spans:
+        tc = t.cell(r, c)
+        tc.text = ""
+        for k, runs in enumerate(cell["paras"]):
+            p = tc.paragraphs[0] if k == 0 else tc.add_paragraph()
+            p.paragraph_format.first_line_indent = Cm(0)
+            p.paragraph_format.left_indent = Cm(0)
+            p.paragraph_format.space_after = Pt(0)
+            center = cell["th"] or c == 0
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER if center else WD_ALIGN_PARAGRAPH.LEFT
+            _put_runs(p, runs, bold=cell["th"])
+        tc.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+        if cell["th"] or c == 0:
+            S._shade(tc, S.HDR_FILL)
+        if cell["rs"] > 1 or cell["cs"] > 1:
+            tc.merge(t.cell(r + cell["rs"] - 1, c + cell["cs"] - 1))
+    return t
+
+
+def build(src=SRC, path=OUT):
+    parser = _DocParser()
+    parser.feed(open(src, encoding="utf-8").read())
     doc = S.new_document()
     sec = doc.sections[0]
     sec.left_margin = sec.right_margin = Cm(2.0)
     setup_numbering(doc)
-
-    item(doc, 2, "Gate #1 미달 항목 재평가 결과")
-    item(doc, 3, "Gate #1 미달 항목 4건(상업화 Risk 2건, JC 파일럿 2건) 재평가를 11/5 실시")
-    item(doc, 4, "변경 사유: 파일럿 라인 정전(CW41), 연차보수(CW42), 설비 PM(CW43)으로 cell 생산 일정 순연, "
-                 "당초 10/30에서 변경")
-    item(doc, 3, "재평가 결과, 미달 항목 4개 중 1개 통과, 3개 미달로 Gate #1 미달 상태 지속")
-    item(doc, 3, "Gate #1 전 항목 통과 시까지 Gate #2 이행 보류. 12/4 2차 재평가에서 전 항목 통과 확보 후 "
-                 "Gate #2 진행 추진")
-
-    caption(doc, "[표. 1] Gate #1 점검 항목별 평가 경과 및 2차 재평가 계획")
-    grid_table(doc, TABLE1_HEADERS, TABLE1_ROWS, [2.2, 4.2, 2.8, 4.4, 3.4],
-               bold_rows=(len(TABLE1_ROWS) - 1,))
-
-    item(doc, 3, "조치 결과에 따른 항목별 진척 및 잔여 과제")
-    item(doc, 4, "1차 재평가에서 cell 효율 1건 해결, 대량 생산 조건에서 목표 효율 확보")
-    item(doc, 4, "잔여 미달 3건 중 2건은 기술본부 기술 확보 과제, 1건은 공정 안정화 과제")
-    item(doc, 5, "Risk #1 CTM 재현성: 분류 기준의 양산 적용 가능성은 확인, BKM 반영 및 검증 수량 확대 필요")
-    item(doc, 5, "Risk #2 모듈 설비 배치 사양: 10 sun light soaking 유효성 및 신뢰성은 검증, 라벨 출력 측정 방안 미완료")
-    item(doc, 5, "JC 파일럿 FpG: 일시적 공정 이슈로 미달, 11/13 공정 정상화 후 재측정 예정")
-
-    caption(doc, "[표. 2] Gate #1 미달 항목별 원인 분석 및 조치 경과")
-    grid_table(doc, TABLE2_HEADERS, TABLE2_ROWS, [2.0, 3.9, 4.5, 3.3, 3.3])
-
+    n_table = 0
+    for kind, body in parser.blocks:
+        if kind == "h1":
+            continue
+        if kind == "table":
+            html_table(doc, body, TABLE_WIDTHS[min(n_table, len(TABLE_WIDTHS) - 1)])
+            n_table += 1
+            continue
+        text = "".join(t for t, _ in body).strip()
+        if not text or re.match(r"^\d{4}-\d{2}-\d{2}", text):
+            continue  # 빈 줄, 작성일·작성자 줄
+        if text.startswith("[표.") or text.startswith("[그림."):
+            caption(doc, text)
+            continue
+        lvl, runs = _strip_marker(body)
+        if lvl is None:
+            p = doc.add_paragraph()
+            _put_runs(p, runs)
+            continue
+        p = doc.add_paragraph(style=STYLE_NAMES[lvl - 1])
+        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        _put_runs(p, runs, bold=LEVELS[lvl - 1][4])
     doc.save(path)
     print("saved:", path)
 
 
 if __name__ == "__main__":
-    build()
+    build(*sys.argv[1:2])
