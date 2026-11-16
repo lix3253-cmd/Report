@@ -10,8 +10,8 @@ import os
 
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_ROW_HEIGHT_RULE, WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
@@ -118,14 +118,35 @@ def item(doc, level, text):
     """level: 1=1., 2=1), 3=①, 4=a). 번호는 스타일의 자동 번호."""
     p = doc.add_paragraph(style=STYLE_NAMES[level - 1])
     p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    fixed_spacing(p, before=6 if level <= 2 else 0, after=2, reset_indent=False)
     font(p.add_run(text), bold=LEVELS[level - 1][4])
     return p
 
 
+PPR_AFTER_SNAP = ("w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents",
+                  "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment",
+                  "w:textboxTightWrap", "w:outlineLvl", "w:divId", "w:cnfStyle",
+                  "w:rPr", "w:sectPr", "w:pPrChange")
+
+
+def fixed_spacing(p, before=0, after=0, reset_indent=True):
+    """붙여넣을 파일의 기본 단락 서식(줄 간격 고정값 등)을 받지 않도록 직접 지정."""
+    pf = p.paragraph_format
+    pf.space_before = Pt(before)
+    pf.space_after = Pt(after)
+    pf.line_spacing_rule = WD_LINE_SPACING.SINGLE
+    if reset_indent:
+        pf.left_indent = Cm(0)
+        pf.first_line_indent = Cm(0)
+    # 문서 격자에 맞추지 않음 (격자 줄 간격으로 눌리는 것 방지)
+    ppr = p._element.get_or_add_pPr()
+    ppr.insert_element_before(_el("w:snapToGrid", **{"w:val": 0}), *PPR_AFTER_SNAP)
+
+
 def caption(doc, text):
-    p = doc.add_paragraph()
-    p.paragraph_format.space_before = Pt(8)
-    p.paragraph_format.space_after = Pt(3)
+    p = doc.add_paragraph(style="Normal")
+    fixed_spacing(p, before=8, after=3)
+    p.paragraph_format.keep_with_next = True
     font(p.add_run(text), bold=True)
 
 
@@ -134,15 +155,36 @@ def shade(cell):
     tcpr.append(_el("w:shd", **{"w:val": "clear", "w:color": "auto", "w:fill": HDR_FILL}))
 
 
+def table_borders(t):
+    """표 스타일이 없는 파일에 붙여넣어도 테두리가 남도록 표에 직접 지정."""
+    tblpr = t._element.tblPr
+    borders = _el("w:tblBorders")
+    for side in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        borders.append(_el(f"w:{side}", **{"w:val": "single", "w:sz": 4,
+                                           "w:space": 0, "w:color": "000000"}))
+    tblpr.insert_element_before(borders, "w:shd", "w:tblLayout", "w:tblCellMar", "w:tblLook")
+    margins = _el("w:tblCellMar")
+    for side, w in (("top", 28), ("left", 85), ("bottom", 28), ("right", 85)):
+        margins.append(_el(f"w:{side}", **{"w:w": w, "w:type": "dxa"}))
+    tblpr.insert_element_before(margins, "w:tblLook")
+
+
 def table(doc, headers, rows, widths, merge_first=True):
     t = doc.add_table(rows=1 + len(rows), cols=len(headers))
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table_borders(t)
+    for row in t.rows:  # 행 높이: 최소값 (내용에 맞춰 늘어남)
+        row.height = Cm(0.7)
+        row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
     for r, values in enumerate([headers] + rows):
         for c, v in enumerate(values):
             cell = t.cell(r, c)
+            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             p = cell.paragraphs[0]
+            p.style = doc.styles["Normal"]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            fixed_spacing(p)
             font(p.add_run(v), bold=(r == 0))
             if r == 0:
                 shade(cell)
@@ -161,7 +203,7 @@ def table(doc, headers, rows, widths, merge_first=True):
     for row in t.rows:
         for j, w in enumerate(widths):
             row.cells[j].width = Cm(w)
-    doc.add_paragraph()
+    fixed_spacing(doc.add_paragraph(style="Normal"))
 
 
 def build(path=OUT):
