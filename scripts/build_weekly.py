@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """제조본부장 주간보고(11/16) docx 빌더 — 다른 Word 파일에 붙여넣기용.
 
-번호(1) / ① / a) / i))는 글자로 넣지 않고 Word 자동 번호(다단계 목록)로 넣는다.
+번호(1. / 1) / ① / a))는 글자로 넣지 않고 Word 자동 번호(다단계 목록)로 넣는다.
 각 단계는 단락 스타일 "보고 1단계" ~ "보고 4단계"에 연결되어 있어 붙여넣어도 번호가 유지된다.
 (origin/claude/lucid-feynman-mclwvn 의 build_gate1_reeval.py 와 같은 방식)
 글꼴: 바탕체 12pt. 내용은 Claude Docs 문서(제조본부장 주간보고) rev 264 기준.
@@ -24,10 +24,10 @@ OUT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 # 단계: (번호 형식, 표시 문자, 왼쪽 cm, 내어쓰기 cm, 굵게)
 LEVELS = [
-    ("decimal",               "%1)", 0.0, 0.7, True),   # 1)
-    ("decimalEnclosedCircle", "%2",  0.5, 0.7, True),   # ①
-    ("lowerLetter",           "%3)", 1.2, 0.7, False),  # a)
-    ("lowerRoman",            "%4)", 1.9, 0.8, False),  # i)
+    ("decimal",               "%1.", 0.0, 0.7, True),   # 1.
+    ("decimal",               "%2)", 0.5, 0.7, True),   # 1)
+    ("decimalEnclosedCircle", "%3",  1.2, 0.7, False),  # ①
+    ("lowerLetter",           "%4)", 1.9, 0.7, False),  # a)
 ]
 STYLE_NAMES = [f"보고 {i + 1}단계" for i in range(len(LEVELS))]
 
@@ -115,7 +115,7 @@ def setup_numbering(doc):
 
 
 def item(doc, level, text):
-    """level: 1=1), 2=①, 3=a), 4=i). 번호는 스타일의 자동 번호."""
+    """level: 1=1., 2=1), 3=①, 4=a). 번호는 스타일의 자동 번호."""
     p = doc.add_paragraph(style=STYLE_NAMES[level - 1])
     p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     font(p.add_run(text), bold=LEVELS[level - 1][4])
