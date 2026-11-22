@@ -285,3 +285,17 @@ def rnr_table(doc, headers, rows, merge_cols=None, wide_cols=None):
                     merged.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 start = i
     return t
+
+
+def caption(doc, text, kind="표"):
+    """[표. N] / [그림. N] 제목. 번호는 문서 전체에서 종류별로 자동 증가.
+
+    표 제목은 표 바로 위, 그림 제목은 그림 바로 아래에서 호출한다.
+    """
+    cnt = doc.__dict__.setdefault("_cap", {})
+    cnt[kind] = cnt.get(kind, 0) + 1
+    p = _para(doc, 0.0, space_before=6 if kind == "표" else 0)
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.keep_with_next = (kind == "표")
+    _set_run_font(p.add_run(f"[{kind}. {cnt[kind]}] {text}"), bold=True)
+    return p
