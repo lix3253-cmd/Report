@@ -53,5 +53,5 @@ Claude Code로 보고서를 **단계별로** 만들어가기 위한 작업 구�
 - **진행 상태는 태스크 리스트로 추적.**
 
 ## 현재 위치
-> **주간보고 Gate #1 2차 재평가 절 Claude Docs 초안 검토 대기** — https://claude.ai/artifact/QQ8yvfiUWDpVYj9QaFywbE
-> Risk 제약 사유, 조정 일정, 증착기 이슈 내용은 사용자 입력 후 채움. 개요 이력: `workflow/3_Gate1_2차재평가_개요.md`.
+> **주간보고 Gate #1 2차 재평가 절 Claude Docs 초안 검토 중** — https://claude.ai/artifact/QQ8yvfiUWDpVYj9QaFywbE
+> 별첨 후보: Risk#1 주차별 검증 계획(CW45\~51). 탑 매니저 대상으로 세부가 과해 본문에서는 제외, 필요 시 별첨으로 추가.
