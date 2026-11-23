@@ -19,8 +19,9 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-FONT = "바탕체"          # 사내 표준이 다르면 이 값만 교체 (예: "맑은 고딕")
-BODY_SIZE = 10.5
+FONT = "바탕"            # 사내 표준 (2026-11-23 사용자 지정)
+BODY_SIZE = 12          # 본문 12pt, 표 11pt (2026-11-23 사용자 지정)
+TABLE_SIZE = 11
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 
 HDR_FILL = "DDEBF7"      # 머리행 파랑 음영
